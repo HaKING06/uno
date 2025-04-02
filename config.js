@@ -1,5 +1,5 @@
 module.exports = Object.seal({
-version: 'v1.1.0',
+version: 'v' + require('./package.json').version,
 
 /*
  * UNO CONFIGURATION FILE

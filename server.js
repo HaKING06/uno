@@ -1,8 +1,10 @@
 const WebSocket = require('ws');
+const fs = require('fs');
 const Logger = require('./modules/logger/logger');
 const PlayerCommands = require('./modules/commands/player');
 const config = require('./config');
 const badwords = require('./modules/badWords');
+const path = require('path');
 
 let log = new Logger();
 
@@ -17,7 +19,8 @@ class Server {
             log.warn("Port is missing in the settings or is invalid!");
             this.config.port = 9090; 
         };
-        this.server = new WebSocket.Server({ port: this.config.port });
+        this.http = require('http').createServer();
+        this.server = new WebSocket.Server({ path: '/ws', server: this.http });
         this.rooms = new Map();
         this.players = new Array();
         this.playerCommands = new PlayerCommands(this);
@@ -494,6 +497,25 @@ class Server {
     main() {
         log.info('Server listening on port', this.config.port);
         log.debug("Debug Mode:", "ON");
+
+        this.http.on('request', (req, res) => {
+            if (req.url === '/') {
+                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.end(fs.readFileSync('./public/index.html'));
+                return;
+            }
+
+            if (fs.existsSync(path.join('./public', req.url))) {
+                res.end(fs.readFileSync(path.join('./public', req.url)));
+                return;
+            } else {
+                res.writeHead(404);
+                res.end('Not Found');
+            }
+        });
+
+        this.http.listen(this.config.port);
+
         this.server.on('connection', socket => {
             if(this.config.max_connections && this.server.clients.size > this.config.max_connections)
                 return socket.close(1000, "Connections limit reached!");

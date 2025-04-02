@@ -1,4 +1,4 @@
-const server = new WebSocket('ws://127.0.0.1:2222');
+const server = new WebSocket(`ws://${location.host}/ws`);
 const user = {}, room = {
     players: []
 };
